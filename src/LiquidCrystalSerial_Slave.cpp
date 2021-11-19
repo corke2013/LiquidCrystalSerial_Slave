@@ -23,13 +23,13 @@ void LiquidCrystalSerial_Slave::run(){
 		if (nBytes < 0) {
 			return;
 		}
-		LiquidCrystalSerial_Slave::lcdSerial->print(runCmd(*cmd, buff, nBytes));
+		LiquidCrystalSerial_Slave::lcdSerial->write(runCmd(*cmd, buff, nBytes));
 	}
 }
 
 uint8_t LiquidCrystalSerial_Slave::runCmd(byte cmd, byte* buff, uint8_t nBytes)
 {
-	uint8_t result;
+	uint8_t result = 0;
 	lcdColRow lcr;
 	lcdCreateChar lcc;
 	lcdSet2RowOffsets ls2ro;
