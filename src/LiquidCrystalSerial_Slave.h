@@ -10,7 +10,7 @@
 
 //buffers
 #define COMMAND_SIZE 1
-#define BUFFER_SIZE 80
+#define BUFFER_SIZE 81
 
 //commands
 #define LCD_PAYLOAD_START 0x02
