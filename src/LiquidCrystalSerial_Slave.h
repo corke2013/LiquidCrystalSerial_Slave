@@ -8,13 +8,8 @@
 #include <hd44780.h>
 #include <SoftwareSerial.h>
 
-//buffers
-#define COMMAND_SIZE 1
-#define BUFFER_SIZE 81
-
 //commands
-#define LCD_PAYLOAD_START 0x02
-#define LCD_PAYLOAD_END 0x03
+#define LCD_PAYLOAD_START 0x01
 #define LCD_BEGIN 0x80
 #define LCD_CLEAR 0x81
 #define LCD_HOME 0x82
@@ -42,8 +37,9 @@
 #define LCD_NO_LINE_WRAP 0x98
 #define LCD_MOVE_CURSOR_LEFT 0x99
 #define LCD_MOVE_CURSOR_RIGHT 0x9A
-#define LCD_ON 0x9B
-#define LCD_OFF 0x9C
+#define LCD_SET_EXEC_TIMES 0x9B
+#define LCD_ON 0x9C
+#define LCD_OFF 0x9D
 
 class LiquidCrystalSerial_Slave
 {
@@ -54,29 +50,33 @@ class LiquidCrystalSerial_Slave
   private:
 	SoftwareSerial* lcdSerial;
 	hd44780* lcd;
-	uint8_t runCmd(byte cmd, byte* buff, uint8_t nBytes);
-	struct lcdColRow {
-		uint8_t col;
-		uint8_t row;
+	byte runCmd(byte cmd, byte* buff, byte nBytes);
+	struct lcdColRowStruct {
+		byte col;
+		byte row;
 	};
-	struct lcdCreateChar {
-		uint8_t charval;
-		uint8_t charmap[8];
+	struct lcdCreateCharStruct {
+		byte charval;
+		byte charmap[8];
 	};
-	struct lcdSet2RowOffsets {
-		uint8_t row1;
-		uint8_t row2;
+	struct lcdSet2RowOffsetsStruct {
+		byte row1;
+		byte row2;
 	};
-	struct lcdSet3RowOffsets {
-		uint8_t row1;
-		uint8_t row2;
-		uint8_t row3;
+	struct lcdSet3RowOffsetsStruct {
+		byte row1;
+		byte row2;
+		byte row3;
 	};
-	struct lcdSet4RowOffsets {
-		uint8_t row1;
-		uint8_t row2;
-		uint8_t row3;
-		uint8_t row4;
+	struct lcdSet4RowOffsetsStruct {
+		byte row1;
+		byte row2;
+		byte row3;
+		byte row4;
+	};
+	struct lcdSetExecTimesStruct {
+		uint16_t chUs;
+		uint16_t insU;
 	};
 };
 

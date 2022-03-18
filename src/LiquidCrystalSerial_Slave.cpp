@@ -14,30 +14,28 @@ void LiquidCrystalSerial_Slave::run(){
 		LiquidCrystalSerial_Slave::lcdSerial->listen();
 	}
 	if (LiquidCrystalSerial_Slave::lcdSerial->find(LCD_PAYLOAD_START)) {
-		byte cmd[COMMAND_SIZE];
-		if (!LiquidCrystalSerial_Slave::lcdSerial->readBytes(cmd, COMMAND_SIZE)) {
-			return;
-		}
-		byte buff[BUFFER_SIZE];
-		uint8_t nBytes = LiquidCrystalSerial_Slave::lcdSerial->readBytesUntil(LCD_PAYLOAD_END, buff, BUFFER_SIZE);
-		if (nBytes < 0) {
-			return;
-		}
-		LiquidCrystalSerial_Slave::lcdSerial->write(runCmd(*cmd, buff, nBytes));
+		byte command;
+		if (sizeof(command) != LiquidCrystalSerial_Slave::lcdSerial->readBytes(&command, sizeof(command))) return;
+		byte nBytesPayload;
+		if (sizeof(nBytesPayload) != LiquidCrystalSerial_Slave::lcdSerial->readBytes(&nBytesPayload, sizeof(nBytesPayload))) return;
+		byte payload[nBytesPayload];
+		if (nBytesPayload != LiquidCrystalSerial_Slave::lcdSerial->readBytes(payload, nBytesPayload)) return;
+		LiquidCrystalSerial_Slave::lcdSerial->write(runCmd(command, payload, nBytesPayload));
 	}
 }
 
-uint8_t LiquidCrystalSerial_Slave::runCmd(byte cmd, byte* buff, uint8_t nBytes)
+byte LiquidCrystalSerial_Slave::runCmd(byte command, byte* payload, byte nBytesPayload)
 {
-	uint8_t result = 0;
-	lcdColRow lcr;
-	lcdCreateChar lcc;
-	lcdSet2RowOffsets ls2ro;
-	lcdSet3RowOffsets ls3ro;
-	lcdSet4RowOffsets ls4ro;
-	switch (cmd) {
+	byte result = 0;
+	lcdColRowStruct lcr;
+	lcdCreateCharStruct lcc;
+	lcdSet2RowOffsetsStruct ls2ro;
+	lcdSet3RowOffsetsStruct ls3ro;
+	lcdSet4RowOffsetsStruct ls4ro;
+	lcdSetExecTimesStruct let;
+	switch (command) {
 		case LCD_BEGIN:
-			lcr = *(lcdColRow*) buff;
+			lcr = *(lcdColRowStruct*) payload;
 			result = LiquidCrystalSerial_Slave::lcd->begin(lcr.col, lcr.row);
 			break;
 		case LCD_CLEAR:
@@ -47,22 +45,22 @@ uint8_t LiquidCrystalSerial_Slave::runCmd(byte cmd, byte* buff, uint8_t nBytes)
 			result = LiquidCrystalSerial_Slave::lcd->home();
 			break;
 		case LCD_SET_CURSOR:
-			lcr = *(lcdColRow*) buff;
+			lcr = *(lcdColRowStruct*) payload;
 			result = LiquidCrystalSerial_Slave::lcd->setCursor(lcr.col, lcr.row);
 			break;
 		case LCD_WRITE:
-			if (nBytes == sizeof(byte)) {
-				LiquidCrystalSerial_Slave::lcd->write(*buff);
+			if (nBytesPayload == sizeof(byte)) {
+				LiquidCrystalSerial_Slave::lcd->write(*payload);
 			}
-			else if (buff[nBytes - 1] == 0x00) {
-				LiquidCrystalSerial_Slave::lcd->write((char*)buff);
+			else if (payload[nBytesPayload - 1] == 0x00) {
+				LiquidCrystalSerial_Slave::lcd->write((char*)payload);
 			}
 			else {
-				LiquidCrystalSerial_Slave::lcd->write(buff, nBytes);
+				LiquidCrystalSerial_Slave::lcd->write(payload, nBytesPayload);
 			}
 			break;
 		case LCD_PRINT:
-			LiquidCrystalSerial_Slave::lcd->print((char*)buff);
+			LiquidCrystalSerial_Slave::lcd->print((char*)payload);
 			break;
 		case LCD_CURSOR:
 			result = LiquidCrystalSerial_Slave::lcd->cursor();
@@ -101,29 +99,29 @@ uint8_t LiquidCrystalSerial_Slave::runCmd(byte cmd, byte* buff, uint8_t nBytes)
 			result = LiquidCrystalSerial_Slave::lcd->rightToLeft();
 			break;
 		case LCD_CREATE_CHAR:
-			lcc = *(lcdCreateChar*) buff;
+			lcc = *(lcdCreateCharStruct*) payload;
 			result = LiquidCrystalSerial_Slave::lcd->createChar(lcc.charval, lcc.charmap);
 			break;
 		case LCD_SET_ROW_OFFSETS:
-			if (nBytes == sizeof(byte)) {
-				result = LiquidCrystalSerial_Slave::lcd->setRowOffsets(*buff);
+			if (nBytesPayload == sizeof(byte)) {
+				result = LiquidCrystalSerial_Slave::lcd->setRowOffsets(*payload);
 			}
-			else if (nBytes == sizeof(ls2ro)) {
-				ls2ro = *(lcdSet2RowOffsets*) buff;
+			else if (nBytesPayload == sizeof(ls2ro)) {
+				ls2ro = *(lcdSet2RowOffsetsStruct*) payload;
 				result = LiquidCrystalSerial_Slave::lcd->setRowOffsets(ls2ro.row1, ls2ro.row2);
 			}
-			else if (nBytes == sizeof(ls3ro)) {
-				ls3ro = *(lcdSet3RowOffsets*) buff;
+			else if (nBytesPayload == sizeof(ls3ro)) {
+				ls3ro = *(lcdSet3RowOffsetsStruct*) payload;
 				result = LiquidCrystalSerial_Slave::lcd->setRowOffsets(ls3ro.row1, ls3ro.row2, ls3ro.row3);
 			}
-			else if (nBytes == sizeof(ls4ro)) {
-				ls4ro = *(lcdSet4RowOffsets*) buff;
+			else if (nBytesPayload == sizeof(ls4ro)) {
+				ls4ro = *(lcdSet4RowOffsetsStruct*) payload;
 				result = LiquidCrystalSerial_Slave::lcd->setRowOffsets(ls4ro.row1, ls4ro.row2, ls4ro.row3, ls4ro.row4);
 			}
 			break;
 		case LCD_COMMAND:
-			if (nBytes == sizeof(byte)) {
-				result = LiquidCrystalSerial_Slave::lcd->command(*buff);
+			if (nBytesPayload == sizeof(byte)) {
+				result = LiquidCrystalSerial_Slave::lcd->command(*payload);
 			}
 			break;
 		case LCD_BACKLIGHT:
@@ -144,6 +142,9 @@ uint8_t LiquidCrystalSerial_Slave::runCmd(byte cmd, byte* buff, uint8_t nBytes)
 		case LCD_MOVE_CURSOR_RIGHT:
 			result = LiquidCrystalSerial_Slave::lcd->moveCursorRight();
 			break;
+		case LCD_SET_EXEC_TIMES:
+			let = *(lcdSetExecTimesStruct*) payload;
+			LiquidCrystalSerial_Slave::lcd->setExecTimes(let.chUs, let.insU);
 		case LCD_ON:
 			result = LiquidCrystalSerial_Slave::lcd->on();
 			break;
